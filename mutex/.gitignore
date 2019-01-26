@@ -1,5 +1,3 @@
-.idea
-
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -12,7 +10,5 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
-
-/vendor
 
 README.html
