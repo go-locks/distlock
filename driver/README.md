@@ -7,7 +7,7 @@ DistLock 驱动程序的接口定义，共有3个接口，详见如下说明
 
 ```go
 type IWatcher interface {
-	Watch(channel string) (notifyChan <-chan struct{})
+	Watch(name string) (notifyChan <-chan struct{})
 }
 ```
 
@@ -19,7 +19,7 @@ type IWatcher interface {
 ```go
 type IDriver interface {
 	Lock(name, value string, expiry time.Duration) (ok bool, wait time.Duration)
-	Unlock(name, value, channel string)
+	Unlock(name, value string)
 	Touch(name, value string, expiry time.Duration) (ok bool)
 }
 ```
@@ -32,10 +32,10 @@ type IDriver interface {
 ```go
 type IRWDriver interface {
 	RLock(name, value string, expiry time.Duration) (ok bool, wait time.Duration)
-	RUnlock(name, value, channel string)
+	RUnlock(name, value string)
 	RTouch(name, value string, expiry time.Duration) (ok bool)
 	WLock(name, value string, expiry time.Duration) (ok bool, wait time.Duration)
-	WUnlock(name, value, channel string)
+	WUnlock(name, value string)
 	WTouch(name, value string, expiry time.Duration) (ok bool)
 }
 ```

@@ -31,17 +31,17 @@ func (rd *readDriver) Lock(name, value string, expiry time.Duration) (ok bool, w
 	return rd.driver.RLock(name, value, expiry)
 }
 
-func (rd *readDriver) Unlock(name, value, channel string) {
-	rd.driver.RUnlock(name, value, channel)
+func (rd *readDriver) Unlock(name, value string) {
+	rd.driver.RUnlock(name, value)
 }
 
 func (rd *readDriver) Touch(name, value string, expiry time.Duration) (ok bool) {
 	return rd.driver.RTouch(name, value, expiry)
 }
 
-func (rd *readDriver) Watch(channel string) <-chan struct{} {
+func (rd *readDriver) Watch(name string) <-chan struct{} {
 	if wd, ok := rd.driver.(driver.IWatcher); ok {
-		return wd.Watch(channel)
+		return wd.Watch(name)
 	} else {
 		return make(<-chan struct{})
 	}
@@ -56,17 +56,17 @@ func (wd *writeDriver) Lock(name, value string, expiry time.Duration) (ok bool, 
 	return wd.driver.WLock(name, value, expiry)
 }
 
-func (wd *writeDriver) Unlock(name, value, channel string) {
-	wd.driver.WUnlock(name, value, channel)
+func (wd *writeDriver) Unlock(name, value string) {
+	wd.driver.WUnlock(name, value)
 }
 
 func (wd *writeDriver) Touch(name, value string, expiry time.Duration) (ok bool) {
 	return wd.driver.WTouch(name, value, expiry)
 }
 
-func (wd *writeDriver) Watch(channel string) <-chan struct{} {
+func (wd *writeDriver) Watch(name string) <-chan struct{} {
 	if wd, ok := wd.driver.(driver.IWatcher); ok {
-		return wd.Watch(channel)
+		return wd.Watch(name)
 	} else {
 		return make(<-chan struct{})
 	}

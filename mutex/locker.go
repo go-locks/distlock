@@ -19,7 +19,7 @@ func newLocker(name string, drve driver.IDriver, optFuncs ...OptFunc) locker {
 	opts := newOptions(name, optFuncs...)
 	locker := locker{options: opts, driver: drve}
 	if wd, ok := locker.driver.(driver.IWatcher); ok {
-		locker.notifyChan = wd.Watch(locker.watchChannel)
+		locker.notifyChan = wd.Watch(locker.name)
 	} else {
 		locker.notifyChan = make(<-chan struct{})
 	}
@@ -82,7 +82,7 @@ func (l *locker) touch() bool {
 }
 
 func (l *locker) unlock() {
-	l.driver.Unlock(l.name, l.value, l.watchChannel)
+	l.driver.Unlock(l.name, l.value)
 }
 
 func (l *locker) _lock(value string) (bool, time.Duration) {
@@ -99,6 +99,6 @@ func (l *locker) _lock(value string) (bool, time.Duration) {
 	} else if wait < 0 {
 		wait = l.defaultWait
 	}
-	l.driver.Unlock(l.name, value, l.watchChannel)
+	l.driver.Unlock(l.name, value)
 	return false, wait
 }

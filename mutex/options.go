@@ -4,17 +4,12 @@ import (
 	"time"
 )
 
-var (
-	WatchChannelPrefix = "unlock-notify-channel-"
-)
-
 type options struct {
 	name         string
 	expiry       time.Duration
 	factor       float64
 	defaultWait  time.Duration
 	costTopLimit time.Duration
-	watchChannel string
 }
 
 func newOptions(name string, optFuncs ...OptFunc) options {
@@ -29,7 +24,6 @@ func newOptions(name string, optFuncs ...OptFunc) options {
 	factValue := float64(opts.expiry) * opts.factor
 	opts.defaultWait = time.Duration(factValue)
 	opts.costTopLimit = opts.expiry - time.Duration(factValue)
-	opts.watchChannel = WatchChannelPrefix + opts.name
 	return opts
 }
 

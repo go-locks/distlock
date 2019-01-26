@@ -16,14 +16,13 @@ var expiry = 10
 var factor = 0.10
 var timeUnit = time.Millisecond
 var notifyChan = make(chan struct{})
-var watchChannel = WatchChannelPrefix + name
 var expiryDuration = timeUnit * time.Duration(expiry)
 var validDelayDuration = timeUnit * time.Duration(float64(expiry)*(1-factor)*50) / 100
 var invalidDelayDuration = timeUnit * time.Duration(float64(expiry)*(1-factor)*100) / 100
 
 func mockDriver(ok bool, wait int, delay time.Duration) interface{} {
 	var mockDriver = mocks.New()
-	mockDriver.On("Watch", watchChannel).Return(notifyChan)
+	mockDriver.On("Watch", name).Return(notifyChan)
 	mockDriver.On("Lock", name, mock.Anything, expiryDuration).After(delay).Return(ok, wait)
 	mockDriver.On("RLock", name, mock.Anything, expiryDuration).After(delay).Return(ok, wait)
 	mockDriver.On("WLock", name, mock.Anything, expiryDuration).After(delay).Return(ok, wait)
