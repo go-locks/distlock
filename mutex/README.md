@@ -1,4 +1,4 @@
-在锁驱动 [Driver](https://github.com/go-locks/distlock/driver/README.md) 的基础提供封装，暴露外部可使用的方法
+在锁驱动 [Driver](https://github.com/go-locks/distlock/tree/master/driver) 的基础提供封装，暴露外部可使用的方法
 
 ## 方法说明
 
