@@ -14,7 +14,8 @@
 释放锁，锁使用后应及时释放，若没有释放则只有等待锁到期后其他 `Goroutine` 才能获取
 - **Until() time.Time**  
 返回当前锁的到期时间点，若在到达该点时任务没有完成则必须通过 `Touch` 方法进行检测并延期
-
+- **Heartbeat(ctx context.Context) <-chan struct{}**  
+自带的锁续约保活机制，参数 `ctx` 用于退出心跳循环，返回值用于向外传递锁 `Touch` 失败的信号，若 `Touch` 失败心跳循环同样会中止。更复杂的情况请使用 `Until` 和 `Touch` 自行实现延期保活
 
 ## 参数配置
 

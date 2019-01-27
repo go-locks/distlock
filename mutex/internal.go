@@ -50,3 +50,21 @@ func (itn *internal) Until() time.Time {
 	defer itn.localMtx.Unlock()
 	return itn.locker.until
 }
+
+func (itn *internal) Heartbeat(ctx context.Context) <-chan struct{} {
+	notify := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(itn.Until().Sub(time.Now())):
+				if !itn.Touch() {
+					notify <- struct{}{}
+					return
+				}
+			}
+		}
+	}()
+	return notify
+}
