@@ -8,6 +8,7 @@ import (
 
 type mocksDriver struct {
 	mock.Mock
+	until time.Time
 }
 
 func New() *mocksDriver {
@@ -16,14 +17,22 @@ func New() *mocksDriver {
 
 func (md *mocksDriver) Lock(name, value string, expiry time.Duration) (bool, time.Duration) {
 	args := md.Called(name, value, expiry)
+	if args.Bool(0) {
+		md.until = time.Now().Add(expiry)
+	}
 	return args.Bool(0), time.Duration(args.Int(1)) * time.Millisecond
 }
 
-func (md *mocksDriver) Unlock(name, value string) {}
+func (md *mocksDriver) Unlock(name, value string) {
+	md.until = time.Now()
+}
 
 func (md *mocksDriver) Touch(name, value string, expiry time.Duration) bool {
-	args := md.Called(name, value, expiry)
-	return args.Bool(0)
+	if time.Now().Before(md.until) {
+		md.until = time.Now().Add(expiry)
+		return true
+	}
+	return false
 }
 
 func (md *mocksDriver) Watch(name string) <-chan struct{} {
@@ -35,7 +44,9 @@ func (md *mocksDriver) RLock(name, value string, expiry time.Duration) (bool, ti
 	return md.Lock(name, value, expiry)
 }
 
-func (md *mocksDriver) RUnlock(name, value string) {}
+func (md *mocksDriver) RUnlock(name, value string) {
+	md.Unlock(name, value)
+}
 
 func (md *mocksDriver) RTouch(name, value string, expiry time.Duration) bool {
 	return md.Touch(name, value, expiry)
@@ -45,7 +56,9 @@ func (md *mocksDriver) WLock(name, value string, expiry time.Duration) (bool, ti
 	return md.Lock(name, value, expiry)
 }
 
-func (md *mocksDriver) WUnlock(name, value string) {}
+func (md *mocksDriver) WUnlock(name, value string) {
+	md.Unlock(name, value)
+}
 
 func (md *mocksDriver) WTouch(name, value string, expiry time.Duration) bool {
 	return md.Touch(name, value, expiry)

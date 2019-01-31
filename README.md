@@ -30,7 +30,6 @@
 * 不可重入（如果您有强烈的需求场景，请通过 [ISSUES](https://github.com/go-locks/distlock/issues) 提供反馈）
 * 非公平锁（Golang的本地锁 `sync.Locker` 视乎也不是公平锁，若您有需求或建议，请通过 [ISSUES](https://github.com/go-locks/distlock/issues) 提供反馈）
 * 有互斥锁 `mutex` 和 读写锁 `rwmutex` 两种类型，具体支持程度详见各个 `Driver` 对应的 `README.md`
-* 本人项目经验少，实现过程难保欠缺一些场景的考虑，望大家见谅，若能通过 [ISSUES](https://github.com/go-locks/distlock/issues) 提供反馈则感激涕零
 * 虽有完整的单元测试，但暂未经过实际项目考验，故慎用于生产环境，如有问题请通过 [ISSUES](https://github.com/go-locks/distlock/issues) 来共同完善
 
 

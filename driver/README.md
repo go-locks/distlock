@@ -14,7 +14,7 @@ type IWatcher interface {
 
 ## IDriver
 
-互斥锁接口，实现本接口的驱动即可用于互斥锁 `mutex` 的使用，返回值 `ok` 标识是否成功获取到锁，当为 `false` 时 `wait` 标识需要等待的时长
+互斥锁接口，实现本接口的驱动即可用于互斥锁 `mutex` 的使用，返回值 `ok` 标识是否成功获取到锁，当为 `false` 时 `wait` 标识需要等待的时长，若驱动无法获取 `wait` 则返回负数即可使用默认等待时长 [defaultWait](https://github.com/go-locks/distlock/blob/master/mutex/options.go#L25)
 
 ```go
 type IDriver interface {

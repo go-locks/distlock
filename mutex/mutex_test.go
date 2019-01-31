@@ -24,9 +24,6 @@ func mockDriver(ok bool, wait int, delay time.Duration) interface{} {
 	var mockDriver = mocks.New()
 	mockDriver.On("Watch", name).Return(notifyChan)
 	mockDriver.On("Lock", name, mock.Anything, expiryDuration).After(delay).Return(ok, wait)
-	mockDriver.On("RLock", name, mock.Anything, expiryDuration).After(delay).Return(ok, wait)
-	mockDriver.On("WLock", name, mock.Anything, expiryDuration).After(delay).Return(ok, wait)
-	mockDriver.On("Touch", name, mock.Anything, expiryDuration).After(delay).Return(ok, wait)
 	return mockDriver
 }
 
@@ -57,52 +54,42 @@ func mockSuccessRWMutex() *RWMutex {
 
 func TestMutex_Lock(t *testing.T) {
 	var counter int32
-	go func() {
-		mockSuccessMutex().Lock()
-		atomic.AddInt32(&counter, 1) // +1
-	}()
-	go func() {
-		mockDelaySuccessMutex().Lock()
-		atomic.AddInt32(&counter, 1) // +1
-	}()
-	go func() {
-		mockDelayFailureMutex().Lock()
+	var addIfLocked = func(mtx *Mutex) {
+		mtx.Lock()
 		atomic.AddInt32(&counter, 1)
-	}()
-	go func() {
-		mockFailureMutex().Lock()
-		atomic.AddInt32(&counter, 1)
-	}()
+	}
+
+	go addIfLocked(mockSuccessMutex())      // +1
+	go addIfLocked(mockDelaySuccessMutex()) // +1
+	go addIfLocked(mockFailureMutex())
+	go addIfLocked(mockDelayFailureMutex())
+
 	time.Sleep(expiryDuration)
+
 	if counter != 2 {
-		t.Errorf("unexpected result, expect = %d, but = %d", 2, counter)
+		t.Errorf("unexpected result, expect = 2, but = %d", counter)
 	}
 }
 
 func TestMutex_LockCtx(t *testing.T) {
 	var counter int32
-	go func() {
-		if mockSuccessMutex().LockCtx(context.TODO()) {
-			atomic.AddInt32(&counter, 1) // +1
-		}
-	}()
-	go func() {
-		var ctx, _ = context.WithTimeout(context.TODO(), expiryDuration-time.Millisecond)
-		if mockFailureMutex().LockCtx(ctx) {
-			atomic.AddInt32(&counter, 1)
-		}
-		atomic.AddInt32(&counter, 1) // +1
-	}()
-	go func() {
-		var ctx, _ = context.WithTimeout(context.TODO(), expiryDuration+time.Millisecond)
-		if mockFailureMutex().LockCtx(ctx) {
+	var addIfLocked = func(mtx *Mutex, ctx context.Context) {
+		if mtx.LockCtx(ctx) {
 			atomic.AddInt32(&counter, 1)
 		}
 		atomic.AddInt32(&counter, 1)
-	}()
+	}
+	var ctx1, _ = context.WithTimeout(context.TODO(), expiryDuration-time.Millisecond)
+	var ctx2, _ = context.WithTimeout(context.TODO(), expiryDuration+time.Millisecond)
+
+	go addIfLocked(mockSuccessMutex(), context.TODO()) // +2
+	go addIfLocked(mockFailureMutex(), ctx1)           // +1
+	go addIfLocked(mockFailureMutex(), ctx2)
+
 	time.Sleep(expiryDuration)
-	if counter != 2 {
-		t.Errorf("unexpected result, expect = %d, but = %d", 2, counter)
+
+	if counter != 3 {
+		t.Errorf("unexpected result, expect = 3, but = %d", counter)
 	}
 }
 
@@ -116,16 +103,38 @@ func TestMutex_TryLock(t *testing.T) {
 }
 
 func TestMutex_Touch(t *testing.T) {
-	if !mockSuccessMutex().Touch() {
+	mtx := mockSuccessMutex()
+	if !mtx.TryLock() || !mtx.Touch() {
 		t.Error("unexpected result, expect = true, but = false")
 	}
-	if mockFailureMutex().Touch() {
+	time.Sleep(expiryDuration)
+	if mtx.Touch() {
+		t.Error("unexpected result, expect = false, but = true")
+	}
+}
+
+func TestMutex_Heartbeat(t *testing.T) {
+	mtx := mockSuccessMutex()
+	ctx, cancel := context.WithCancel(context.TODO())
+
+	mtx.TryLock()
+	mtx.Heartbeat(ctx)
+
+	time.Sleep(expiryDuration)
+	if !mtx.Touch() {
+		t.Error("unexpected result, expect = true, but = false")
+	}
+
+	cancel()
+	time.Sleep(expiryDuration)
+	if mtx.Touch() {
 		t.Error("unexpected result, expect = false, but = true")
 	}
 }
 
 func TestRWMutex_ReadLock(t *testing.T) {
 	var counter int32
+
 	go func() {
 		mockSuccessRWMutex().Read().Lock()
 		atomic.AddInt32(&counter, 1) // + 1
@@ -138,13 +147,17 @@ func TestRWMutex_ReadLock(t *testing.T) {
 			atomic.AddInt32(&counter, 1) // + 1
 		}
 	}()
+
 	time.Sleep(expiryDuration)
+
 	if counter != 3 {
 		t.Errorf("unexpected result, expect = %d, but = %d", 3, counter)
 	}
 }
+
 func TestRWMutex_WriteLock(t *testing.T) {
 	var counter int32
+
 	go func() {
 		mockSuccessRWMutex().Write().Lock()
 		atomic.AddInt32(&counter, 1) // + 1
@@ -157,7 +170,9 @@ func TestRWMutex_WriteLock(t *testing.T) {
 			atomic.AddInt32(&counter, 1) // + 1
 		}
 	}()
+
 	time.Sleep(expiryDuration)
+
 	if counter != 3 {
 		t.Errorf("unexpected result, expect = %d, but = %d", 3, counter)
 	}

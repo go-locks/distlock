@@ -45,10 +45,10 @@ func (itn *internal) Unlock() {
 	itn.localMtx.Unlock()
 }
 
-func (itn *internal) Until() time.Time {
+func (itn *internal) Until() time.Duration {
 	itn.localMtx.Lock()
 	defer itn.localMtx.Unlock()
-	return itn.locker.until
+	return time.Until(itn.locker.until)
 }
 
 func (itn *internal) Heartbeat(ctx context.Context) <-chan struct{} {
@@ -58,9 +58,9 @@ func (itn *internal) Heartbeat(ctx context.Context) <-chan struct{} {
 			select {
 			case <-ctx.Done():
 				return
-			case <-time.After(itn.Until().Sub(time.Now())):
+			case <-time.After(itn.Until()):
 				if !itn.Touch() {
-					notify <- struct{}{}
+					close(notify)
 					return
 				}
 			}

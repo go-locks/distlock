@@ -1,5 +1,12 @@
 在锁驱动 [Driver](https://github.com/go-locks/distlock/tree/master/driver) 的基础提供封装，暴露外部可使用的方法
 
+
+## 参数配置
+
+- **expiry** - 默认 5s，锁的存活时长，根据使用场景设置合适的存活时长，避免锁释放失败后造成死锁
+- **factor** - 默认 0.12，(factor * expiry)做为默认 `wait` 时长，也做为 `Until()` 的预留时长，详见 [options.go](options.go#L24-L26)
+
+
 ## 方法说明
 
 - **Lock()**  
@@ -16,8 +23,3 @@
 返回当前锁的到期时间点，若在到达该点时任务没有完成则必须通过 `Touch` 方法进行检测并延期
 - **Heartbeat(ctx context.Context) <-chan struct{}**  
 自带的锁续约保活机制，参数 `ctx` 用于退出心跳循环，返回值用于向外传递锁 `Touch` 失败的信号，若 `Touch` 失败心跳循环同样会中止。更复杂的情况请使用 `Until` 和 `Touch` 自行实现延期保活
-
-## 参数配置
-
-- **expiry** - 默认 5s，锁的存活时长，根据使用场景设置合适的存活时长，避免锁释放失败后造成死锁
-- **factor** - 默认 0.12，(factor * expiry)做为默认 `wait` 时长，也做为 `Until()` 的预留时长，详见 [options.go](options.go#L29-L31)
